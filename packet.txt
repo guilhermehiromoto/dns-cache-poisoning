@@ -1,0 +1,63 @@
+###[ Ethernet ]### 
+  dst       = 28:56:5a:49:ff:67
+  src       = c4:e9:84:9a:14:16
+  type      = IPv4
+###[ IP ]### 
+     version   = 4
+     ihl       = 5
+     tos       = 0x0
+     len       = 107
+     id        = 30245
+     flags     = 
+     frag      = 0
+     ttl       = 251
+     proto     = udp
+     chksum    = 0xc5a5
+     src       = 192.168.1.1
+     dst       = 192.168.1.101
+     \options   \
+###[ UDP ]### 
+        sport     = domain
+        dport     = 56937
+        len       = 87
+        chksum    = 0x377c
+###[ DNS ]### 
+           id        = 13535
+           qr        = 1
+           opcode    = QUERY
+           aa        = 0
+           tc        = 0
+           rd        = 1
+           ra        = 1
+           z         = 0
+           ad        = 0
+           cd        = 0
+           rcode     = ok
+           qdcount   = 1
+           ancount   = 2
+           nscount   = 0
+           arcount   = 0
+           \qd        \
+            |###[ DNS Question Record ]### 
+            |  qname     = 'www.facebook.com.'
+            |  qtype     = A
+            |  qclass    = IN
+           \an        \
+            |###[ DNS Resource Record ]### 
+            |  rrname    = 'www.facebook.com.'
+            |  type      = CNAME
+            |  rclass    = IN
+            |  ttl       = 2436
+            |  rdlen     = None
+            |  rdata     = 'star-mini.c10r.facebook.com.'
+            |###[ DNS Resource Record ]### 
+            |  rrname    = 'star-mini.c10r.facebook.com.'
+            |  type      = A
+            |  rclass    = IN
+            |  ttl       = 35
+            |  rdlen     = None
+            |  rdata     = 157.240.222.35
+           ns        = None
+           ar        = None
+
+
